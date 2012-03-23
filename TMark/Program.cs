@@ -8,7 +8,6 @@ namespace TMark
     {
         static void Main(string[] args)
         {
-            Dictionary<int, int> dic = StringPeeler.JSONPairs;
             string test = 
 @"{
     test01 : 0xf1f1f1,
