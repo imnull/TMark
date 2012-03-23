@@ -1,4 +1,13 @@
-﻿using System;
+﻿/** 
+ *
+ * JsonReader.cs
+ * (c) 2011-2012 mk31415926535@gmail.com
+ * JsonReader.cs may be freely distributed under the MIT license.
+ *
+ * */
+
+
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
@@ -83,7 +92,6 @@ namespace TMark
         /// <summary>
         /// 读取连续的空白字符
         /// </summary>
-        /// <returns>返回是否进行了空白读取</returns>
         public void ReadBlank() 
         {
             int ch;
