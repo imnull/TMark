@@ -71,22 +71,14 @@ namespace TMark
 
         /// <summary>
         /// 读取到一个对象的开始部分
+        /// 用于读取的开始部分
         /// </summary>
         /// <returns>返回int用于判断数据类型</returns>
         public int ReadToObjBegin()
         {
             int ch;
             while ((ch = Read()) > -1 && ch != '{' && ch != '[');
-
-            switch (ch)
-            {
-                case '{':
-                    return 0;
-                case '[':
-                    return 1;
-                default:
-                    return -1;
-            }
+            return ch;
         }
 
         /// <summary>
@@ -167,7 +159,7 @@ namespace TMark
         /// 读取属性名称
         /// </summary>
         /// <param name="name">输出属性名称</param>
-        public void ReadPropertyName(out string name)
+        public void ReadPropertyName(out QuoteString name)
         {
             ReadBlank();
 
@@ -176,10 +168,8 @@ namespace TMark
 
             if (ch == '\'' || ch == '"')
             {
-                QuoteString qs = new QuoteString();
-                ReadQuote(ch, out qs.Value);
-                qs.Quote = (char)ch;
-                name = qs.ToString();
+                name = new QuoteString(null, ch);
+                ReadQuote(name.Quote, out name.Value);
                 if (Current != ':')
                 {
                     ReadBlank();
@@ -198,7 +188,7 @@ namespace TMark
                         case '\r':
                         case '\n':
                         case '\t':
-                            name = origin.Substring(start - 1, position - start);
+                            name = new QuoteString(origin.Substring(start - 1, position - start), -1);
                             if (Current != ':')
                             {
                                 ReadBlank();
@@ -210,7 +200,7 @@ namespace TMark
                             continue;
                     }
                 }
-                name = null;
+                name = QuoteString.Null;
             }
         }
 
@@ -377,7 +367,7 @@ namespace TMark
         {
             if (jr.Current != '{') throw new Exception("should be '['");
 
-            string name;
+            QuoteString name;
             object value;
             int type;
 
@@ -442,20 +432,51 @@ namespace TMark
         }
     }
 
-    public struct QuoteString
+    public class QuoteString
     {
         public QuoteString(string v, int q)
         {
             Value = v;
             Quote = (char)q;
         }
+        public QuoteString() : this(null, -1) { }
+
         public string Value;
         public char Quote;
 
         public override string ToString()
         {
-            if (Quote < 0) return Value;
-            else return String.Format("{0}{1}{0}", Quote, Value);
+            switch (Quote)
+            {
+                case '\'':
+                case '"':
+                    return String.Format("{0}{1}{0}", Quote, Value);
+                default:
+                    return Value;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return Value.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return GetHashCode() == obj.GetHashCode();
+        }
+
+        public bool IsNull
+        {
+            get { return String.IsNullOrEmpty(Value) && Quote < 0; }
+        }
+
+        public static QuoteString Null
+        {
+            get 
+            {
+                return new QuoteString(null, -1);
+            }
         }
     }
 
@@ -464,15 +485,19 @@ namespace TMark
     /// </summary>
     public class JSON
     {
-        public JSON() { dic = new Dictionary<string, object>(); }
-        private readonly Dictionary<string, object> dic;
+        public JSON()
+        {
+            dic = new Dictionary<QuoteString, object>();
+            _ArrayValue = null;
+        }
+        private readonly Dictionary<QuoteString, object> dic;
 
         /// <summary>
         /// 添加值对
         /// </summary>
         /// <param name="key">键值</param>
         /// <param name="val">值</param>
-        public void Add(string key, object val)
+        public void Add(QuoteString key, object val)
         {
             dic[key] = val;
         }
@@ -480,7 +505,14 @@ namespace TMark
         /// <summary>
         /// 清空
         /// </summary>
-        public void Clear() { dic.Clear(); }
+        public void Clear()
+        {
+            dic.Clear();
+            _ArrayValue = null;
+        }
+
+        private object[] _ArrayValue;
+        public object[] ArrayValue { get { return _ArrayValue; } }
 
         /// <summary>
         /// 读取JSON字符串
@@ -491,23 +523,41 @@ namespace TMark
             Clear();
 
             JsonReader jr = new JsonReader(s);
-            jr.ReadToObjBegin();
+            int type = jr.ReadToObjBegin();
 
-            int type;
-
-            JsonReader.ReadToJSON(jr, this, out type);
+            switch (type)
+            {
+                case '{':
+                    JsonReader.ReadToJSON(jr, this, out type);
+                    break;
+                case '[':
+                    _ArrayValue = jr.ReadArray(out type);
+                    break;
+                default:
+                    throw new Exception("Unkonwn JSON format");
+            }
         }
 
         public override string ToString()
         {
             List<string> list = new List<string>();
-            foreach (string key in dic.Keys)
+            if (dic.Count > 0)
             {
-
-                list.Add(String.Format("{0}:{1}", key, GetValue(dic[key])));
+                foreach (QuoteString key in dic.Keys)
+                {
+                    list.Add(String.Format("{0}:{1}", key, GetValue(dic[key])));
+                }
+                return String.Format("{{{0}}}", String.Join(",", list.ToArray()));
             }
-
-            return String.Format("{{{0}}}", String.Join(",", list.ToArray()));
+            else if (dic.Count < 1 && _ArrayValue != null)
+            {
+                foreach (object o in _ArrayValue)
+                {
+                    list.Add(GetValue(o));
+                }
+                return String.Format("[{0}]", String.Join(",", list.ToArray()));
+            }
+            return "{}";
         }
 
         private static string GetValue(object value)
@@ -538,6 +588,28 @@ namespace TMark
             else
             {
                 throw new Exception("Unknown type");
+            }
+        }
+
+        public object this[string key]
+        {
+            get
+            {
+                List<QuoteString> keys = new List<QuoteString>(this.dic.Keys);
+                QuoteString qs = keys.Find(delegate(QuoteString q) {
+                    if (q.Value == key) return true;
+                    return false;
+                });
+                if (qs == null || !this.dic.ContainsKey(qs)) return null;
+                object value = this.dic[qs];
+                if (value is QuoteString)
+                {
+                    return ((QuoteString)value).Value;
+                }
+                else
+                {
+                    return value;
+                }
             }
         }
 
