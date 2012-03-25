@@ -87,7 +87,6 @@ namespace TMark
         public void ReadBlank() 
         {
             int ch;
-            int p = position;
             while ((ch = Peek()) > -1)
             {
                 switch (ch)
@@ -450,7 +449,11 @@ namespace TMark
             {
                 case '\'':
                 case '"':
-                    return String.Format("{0}{1}{0}", Quote, Value);
+					string v = Value == null ? String.Empty : Value.ToString();
+					v = v.Replace("\n", @"\n");
+					v = v.Replace("\r", @"\r");
+					v = v.Replace(Quote.ToString(), "\\" + Quote.ToString());
+                    return String.Format("{0}{1}{0}", Quote, v);
                 default:
                     return Value;
             }
@@ -501,6 +504,11 @@ namespace TMark
         {
             dic[key] = val;
         }
+		
+		public void Add(string key, object val)
+		{
+			Add (new QuoteString(key, -1), val);
+		}
 
         /// <summary>
         /// 清空
@@ -563,7 +571,7 @@ namespace TMark
         private static string GetValue(object value)
         {
             if (value == null) return "null";
-            else if (value is QuoteString || value is Int32 || value is JSON)
+            else if (value is QuoteString || value is Int32 || value is JSON || value is string)
             {
                 return value.ToString();
             }
@@ -611,6 +619,25 @@ namespace TMark
                     return value;
                 }
             }
+			set
+			{
+				QuoteString qsKey = new QuoteString(key, -1);
+				object v;
+				if(value is string)
+				{
+					v = new QuoteString((string)value, '\'');
+				} else {
+					v = value;
+				}
+				if(dic.ContainsKey(qsKey))
+				{
+					dic[qsKey] = v;
+				}
+				else 
+				{
+					this.Add(qsKey, v);
+				}
+			}
         }
 
     }
