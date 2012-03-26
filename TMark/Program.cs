@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,6 +9,15 @@ namespace TMark
     {
         static void Main(string[] args)
         {
+            //string html = "<!--{name : 't1', a:1}--> <!--{name : 't2', b:2}--> ";
+
+            string tfile = Directory.GetCurrentDirectory() + "\\template.html";
+            TemplateMarkCollection tc = new TemplateMarkCollection();
+            tc.Read(tfile, Encoding.Default);
+
+            Console.ReadLine();
+
+            /*
             string test =
 @"{
     test01 : 0xf1f1f1,
@@ -57,12 +67,7 @@ aaa:[12,34,56],
 			tm.Parameters["@st"] = 1;
 			
 			Console.WriteLine(tm.ToString());
-
-			
-			
-			
-            Console.ReadLine();
-
+            */
         }
     }
 }

@@ -39,6 +39,11 @@ namespace TMark
             reader = new StringReader(origin);
         }
 
+        public string OriginString
+        {
+            get { return this.origin; }
+        }
+
         /// <summary>
         /// 当前位置字符
         /// </summary>
@@ -492,8 +497,19 @@ namespace TMark
         {
             dic = new Dictionary<QuoteString, object>();
             _ArrayValue = null;
+            jr = null;
         }
         private readonly Dictionary<QuoteString, object> dic;
+        private JsonReader jr;
+
+        public string OriginString
+        {
+            get 
+            {
+                if (jr == null) return String.Empty;
+                return jr.OriginString;
+            }
+        }
 
         /// <summary>
         /// 添加值对
@@ -530,7 +546,7 @@ namespace TMark
         {
             Clear();
 
-            JsonReader jr = new JsonReader(s);
+            jr = new JsonReader(s);
             int type = jr.ReadToObjBegin();
 
             switch (type)
