@@ -1,3 +1,11 @@
+/** 
+ *
+ * TemplateMark.cs
+ * (c) 2011-2012 mk31415926535@gmail.com
+ * TemplateMark.cs may be freely distributed under the MIT license.
+ *
+ * */
+
 using System;
 using System.IO;
 using System.Collections.Generic;
