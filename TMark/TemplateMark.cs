@@ -152,6 +152,15 @@ namespace TMark
                 Read(sr.ReadToEnd());
             }
         }
+		
+		public TemplateMark this[string key]
+		{
+			get
+			{
+				if(dic.ContainsKey(key)) return dic[key];
+				return null;
+			}
+		}
     }
 }
 

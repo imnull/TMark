@@ -10,7 +10,13 @@
         params : {
             '@cid' : 9,
             '@limit' : 10
-        }
+        },
+		xsl : 
+'<div xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xsl:version="1.0">
+<xsl:for-each select="DocumentElement/article">
+<a><xsl:value-of select="title" /></a>		
+</xsl:for-each>		
+</div>'
     } -->
 
     <hr />
@@ -22,7 +28,11 @@
             '@a' : 1,
             '@b' : 'name',
             '@c' : 'job'
-        }
+        },
+		xsl : 
+'<xsl:for-each select="catalog/cd">
+<div><xsl:value-of select="title"/></div>
+</xsl:for-each>'
     } -->
 	</body>
 </html>
