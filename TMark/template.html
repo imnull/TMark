@@ -11,12 +11,11 @@
             '@cid' : 9,
             '@limit' : 10
         },
-		xsl : 
-'<div xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xsl:version="1.0">
-<xsl:for-each select="DocumentElement/article">
-<a><xsl:value-of select="title" /></a>		
-</xsl:for-each>		
-</div>'
+		xsl : '<xsl:for-each select="DocumentElement/article"><a><xsl:value-of select="title" /></a></xsl:for-each>',
+        node : {
+            name : 'div',
+            id : 'abc'
+        }
     } -->
 
     <hr />
@@ -30,9 +29,10 @@
             '@c' : 'job'
         },
 		xsl : 
-'<xsl:for-each select="catalog/cd">
-<div><xsl:value-of select="title"/></div>
-</xsl:for-each>'
+'<xsl:for-each select="DocumentElement/article">
+<a><xsl:value-of select="title" /></a>		
+</xsl:for-each>		
+'
     } -->
 	</body>
 </html>

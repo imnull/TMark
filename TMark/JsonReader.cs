@@ -656,5 +656,17 @@ namespace TMark
 			}
         }
 
+        public IEnumerable<string> Keys
+        {
+            get
+            {
+                List<string> keys = new List<string>();
+                foreach (QuoteString key in dic.Keys)
+                {
+                    keys.Add(key.Value);
+                }
+                return keys;
+            }
+        }
     }
 }
